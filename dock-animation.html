@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Floating widgets → Dock · Animation study</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            margin: 0;
+            color: #202024;
+            background: #fff;
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 76px;
+            padding: 0 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffffdb;
+            backdrop-filter: blur(16px);
+            z-index: 20
+        }
+
+        header strong {
+            letter-spacing: -.7px;
+            font-size: 20px
+        }
+
+        header span {
+            font-size: 12px;
+            color: #777
+        }
+
+        header button {
+            border: 0;
+            border-radius: 20px;
+            background: #f0f0f2;
+            padding: 10px 18px;
+            color: #333
+        }
+
+        .journey {
+            height: 240vh;
+            min-height: 1500px
+        }
+
+        .stage {
+            height: 100svh;
+            min-height: 620px;
+            position: sticky;
+            top: 0;
+            overflow: hidden
+        }
+
+        .hero {
+            position: absolute;
+            left: 50%;
+            top: 47%;
+            width: min(480px, 75vw);
+            text-align: center;
+            transform: translate(-50%, -50%);
+            z-index: 2
+        }
+
+        .hero h1 {
+            font-family: Georgia, serif;
+            font-size: clamp(48px, 6.4vw, 88px);
+            font-weight: 500;
+            letter-spacing: -4px;
+            line-height: .96;
+            margin: 0 0 34px
+        }
+
+        .hero p {
+            font-size: 18px;
+            line-height: 1.55;
+            color: #818185;
+            margin: 0 auto 28px;
+            max-width: 440px
+        }
+
+        .hero button {
+            border: 0;
+            background: #222226;
+            color: white;
+            border-radius: 13px;
+            padding: 15px 23px;
+            font-weight: 600
+        }
+
+        .hero small {
+            display: block;
+            margin-top: 20px;
+            color: #888;
+            font-size: 12px
+        }
+
+        .desktop {
+            position: absolute;
+            inset: 14% 3% 9%;
+            border-radius: 16px;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(.94);
+            background: radial-gradient(ellipse at 80% 10%, #d5fff1 0%, transparent 48%), radial-gradient(ellipse at 10% 20%, #9988ec 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, #f4cff4 0%, transparent 40%), linear-gradient(125deg, #a2b7ee, #9fe2eb 55%, #a5b3ef);
+            box-shadow: inset 0 0 50px #ffffff55
+        }
+
+        .desktop:after {
+            content: "";
+            position: absolute;
+            width: 130%;
+            height: 45%;
+            left: -15%;
+            top: 20%;
+            border-radius: 50%;
+            border-top: 30px solid #ffffff77;
+            transform: rotate(-19deg);
+            filter: blur(20px)
+        }
+
+        .menubar {
+            height: 29px;
+            background: #ffffff45;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 11px;
+            color: #303344
+        }
+
+        .dock-tray {
+            position: absolute;
+            border: 1px solid #ffffff7a;
+            background: #ffffff75;
+            backdrop-filter: blur(18px);
+            border-radius: 22px;
+            box-shadow: 0 15px 40px #22224a19;
+            opacity: 0
+        }
+
+        .tile {
+            position: absolute;
+            left: 0;
+            top: 0;
+            will-change: transform;
+            z-index: 5;
+            transform-origin: center
+        }
+
+        .tile button {
+            display: block;
+            border: 0;
+            padding: 0;
+            background: transparent;
+            color: inherit;
+            transition: transform .22s cubic-bezier(.2, .8, .2, 1);
+            width: 100%;
+            height: 100%;
+            border-radius: 14px
+        }
+
+        .tile button:focus-visible {
+            outline: 3px solid #507cff;
+            outline-offset: 5px
+        }
+
+        .tile button:hover {
+            transform: translateY(-12px) scale(1.1)
+        }
+
+        .tile button:active {
+            transform: translateY(-20px) scale(.95)
+        }
+
+        .face {
+            width: 100%;
+            height: 100%;
+            background: #fafafbee;
+            border: 1px solid #f1f1f3;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px #23233512;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            text-align: left;
+            overflow: hidden
+        }
+
+        .icon .face {
+            border: 0;
+            box-shadow: 0 5px 12px #14245325
+        }
+
+        .finder .face {
+            background: linear-gradient(100deg, #00b8f4 50%, #aedfff 50%);
+            font-size: 47px;
+            color: #17376c
+        }
+
+        .finder svg {
+            width: 80%;
+            height: 80%
+        }
+
+        .messages .face {
+            background: linear-gradient(#6ff275, #08b628);
+            position: relative
+        }
+
+        .bubble {
+            width: 70%;
+            height: 57%;
+            border-radius: 50%;
+            background: #fff;
+            position: relative
+        }
+
+        .bubble:after {
+            content: "";
+            position: absolute;
+            bottom: -3px;
+            left: 9px;
+            border-top: 13px solid white;
+            border-right: 13px solid transparent
+        }
+
+        .badge {
+            position: absolute;
+            right: -5px;
+            top: -7px;
+            background: #ff5954;
+            color: white;
+            border-radius: 50%;
+            font-size: 16px;
+            width: 25px;
+            height: 25px;
+            display: grid;
+            place-items: center
+        }
+
+        .folder .face {
+            background: linear-gradient(#61cfff, #249ce7);
+            color: white;
+            font-size: 44px;
+            border-radius: 9px;
+            box-shadow: inset 0 6px 0 #a8e2ff, 0 4px 12px #23233522
+        }
+
+        .folder:before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: -7px;
+            background: #38a7e8;
+            width: 42%;
+            height: 15px;
+            border-radius: 6px;
+            z-index: -1
+        }
+
+        .music .cover {
+            height: 43px;
+            width: 43px;
+            flex-shrink: 0;
+            background: linear-gradient(145deg, #89899b, #363649);
+            color: white;
+            border-radius: 7px;
+            display: grid;
+            place-items: center;
+            font-size: 28px
+        }
+
+        .title {
+            font-size: 13px;
+            font-weight: 600
+        }
+
+        .muted {
+            font-size: 11px;
+            color: #82828b;
+            margin-top: 3px
+        }
+
+        .music .controls {
+            font-size: 13px;
+            white-space: nowrap;
+            letter-spacing: 4px
+        }
+
+        .music .line {
+            height: 3px;
+            background: #d4d4d8;
+            margin-top: 7px;
+            border-radius: 2px
+        }
+
+        .battery .ring {
+            height: 42px;
+            width: 42px;
+            border: 3px solid #49cc72;
+            border-left-color: #d7f0df;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 17px
+        }
+
+        .battery .unit {
+            text-align: center
+        }
+
+        .timer .ring {
+            height: 35px;
+            width: 35px;
+            border: 5px solid #ffa846;
+            border-left-color: #ffebd3;
+            border-radius: 50%
+        }
+
+        .timer .title {
+            font-size: 23px
+        }
+
+        .weather .sun {
+            font-size: 28px
+        }
+
+        .weather .title {
+            font-size: 19px
+        }
+
+        .note .face {
+            background: #f7da74;
+            border: 0;
+            justify-content: flex-start;
+            font-size: 13px;
+            line-height: 1.5
+        }
+
+        .calendar .date {
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: #f0f0f2;
+            text-align: center
+        }
+
+        .calendar .date b {
+            display: block;
+            font-size: 11px;
+            color: #ec4e61
+        }
+
+        .calendar .date span {
+            font-size: 27px
+        }
+
+        .stock svg,
+        .revenue svg {
+            width: 90px;
+            height: 35px;
+            flex-shrink: 0
+        }
+
+        .stock .gain {
+            color: #399e68;
+            font-size: 10px;
+            margin-top: 3px
+        }
+
+        .revenue .title {
+            font-size: 21px
+        }
+
+        .toast {
+            position: absolute;
+            left: 50%;
+            top: 35%;
+            transform: translateX(-50%);
+            border-radius: 16px;
+            background: #ffffffef;
+            box-shadow: 0 12px 50px #23233a22;
+            padding: 18px 28px;
+            z-index: 10;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s
+        }
+
+        .toast.visible {
+            opacity: 1
+        }
+
+        .footer {
+            text-align: center;
+            padding: 55px 20px 80px;
+            background: #f7f7f9
+        }
+
+        .footer h2 {
+            font-family: Georgia, serif;
+            font-size: 40px;
+            font-weight: 500;
+            letter-spacing: -1px
+        }
+
+        .footer p {
+            color: #888;
+            font-size: 14px
+        }
+
+        .footer button {
+            border: 0;
+            border-radius: 12px;
+            background: #222226;
+            color: white;
+            padding: 13px 22px
+        }
+
+        .hint {
+            position: absolute;
+            left: 50%;
+            bottom: 5%;
+            transform: translateX(-50%);
+            color: #92929a;
+            font-size: 12px;
+            text-align: center;
+            z-index: 3
+        }
+
+        .hint span {
+            display: block;
+            margin-top: 9px;
+            font-size: 22px
+        }
+
+        @media(max-width:600px) {
+            header {
+                height: 60px
+            }
+
+            header span {
+                display: none
+            }
+
+            .hero h1 {
+                letter-spacing: -2px
+            }
+
+            .hero p {
+                font-size: 15px
+            }
+
+            .stage {
+                min-height: 620px
+            }
+
+            .desktop {
+                inset: 12% 2% 10%
+            }
+
+            .menubar {
+                font-size: 9px;
+                padding: 0 9px
+            }
+        }
+
+        @media(prefers-reduced-motion:reduce) {
+            html {
+                scroll-behavior: auto
+            }
+
+            .tile button {
+                transition: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header><strong>Dock study.</strong><span>Scroll to bring everything together</span><button id="replay">Replay
+            ↗</button></header>
+    <main>
+        <section class="journey">
+            <div class="stage">
+                <div class="desktop">
+                    <div class="menubar"><span>● &nbsp; <b>Finder</b> &nbsp; File &nbsp; Edit &nbsp;
+                            View</span><span>Mon 9:41</span></div>
+                </div>
+                <div class="hero">
+                    <h1>Your space.<br>In motion.</h1>
+                    <p>A playful study of floating widgets finding their home in a glass dock.</p><button
+                        id="explore">Bring it together ↓</button><small>Scroll down to explore the animation</small>
+                </div>
+                <div class="dock-tray"></div>
+                <div class="tile icon finder" data-x=".16" data-y=".26" data-r="-12" data-w="78" data-h="78"><button
+                        aria-label="Finder">
+                        <div class="face"><svg viewBox="0 0 80 80" fill="none">
+                                <path d="M24 26v7m30-7v7M17 47q22 20 45 0M44 12l-5 32h8l-3 25" stroke="currentColor"
+                                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg></div>
+                    </button></div>
+                <div class="tile icon messages" data-x=".35" data-y=".17" data-r="9" data-w="60" data-h="60"><button
+                        aria-label="Messages">
+                        <div class="face">
+                            <div class="bubble"></div>
+                        </div><span class="badge">3</span>
+                    </button></div>
+                <div class="tile battery" data-x=".55" data-y=".18" data-r="6" data-w="146" data-h="78"><button
+                        aria-label="Battery">
+                        <div class="face">
+                            <div class="unit">
+                                <div class="ring">♬</div>
+                                <div class="muted">85%</div>
+                            </div>
+                            <div class="unit">
+                                <div class="ring">▰</div>
+                                <div class="muted">92%</div>
+                            </div>
+                        </div>
+                    </button></div>
+                <div class="tile music" data-x=".77" data-y=".24" data-r="-8" data-w="235" data-h="74"><button
+                        aria-label="Now playing">
+                        <div class="face">
+                            <div class="cover">♪</div>
+                            <div>
+                                <div class="title">The Entertainer</div>
+                                <div class="muted">Scott Joplin</div>
+                                <div class="line"></div>
+                            </div>
+                            <div class="controls">◂ ▶</div>
+                        </div>
+                    </button></div>
+                <div class="tile timer" data-x=".18" data-y=".49" data-r="-8" data-w="168" data-h="66"><button
+                        aria-label="Focus timer">
+                        <div class="face">
+                            <div class="ring"></div>
+                            <div>
+                                <div class="title">12:30</div>
+                                <div class="muted">Focus</div>
+                            </div>
+                        </div>
+                    </button></div>
+                <div class="tile weather" data-x=".13" data-y=".67" data-r="-6" data-w="122" data-h="55"><button
+                        aria-label="Weather">
+                        <div class="face"><span class="sun">🌤</span>
+                            <div>
+                                <div class="title">18°</div>
+                                <div class="muted">Oslo</div>
+                            </div>
+                        </div>
+                    </button></div>
+                <div class="tile icon folder" data-x=".82" data-y=".58" data-r="8" data-w="70" data-h="62"><button
+                        aria-label="Projects">
+                        <div class="face">P</div>
+                    </button></div>
+                <div class="tile stock" data-x=".81" data-y=".72" data-r="-7" data-w="177" data-h="64"><button
+                        aria-label="Stock">
+                        <div class="face">
+                            <div>
+                                <div class="muted">AAPL</div>
+                                <div class="title">333.08</div>
+                                <div class="gain">+0.24%</div>
+                            </div><svg viewBox="0 0 100 40">
+                                <path
+                                    d="M1 32l5-17 5 8 6-12 5 5 5-3 6 4 5-10 5 3 5-7 5 5 5-4 5 4 5-7 5 6 5-3 5-7 5 12 6-4"
+                                    fill="none" stroke="#32a16c" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </button></div>
+                <div class="tile note" data-x=".20" data-y=".83" data-r="-9" data-w="170" data-h="66"><button
+                        aria-label="Sticky note">
+                        <div class="face">Ship it.<br>Take a walk.</div>
+                    </button></div>
+                <div class="tile revenue" data-x=".52" data-y=".90" data-r="8" data-w="200" data-h="66"><button
+                        aria-label="Revenue">
+                        <div class="face">
+                            <div>
+                                <div class="muted">Studio</div>
+                                <div class="title">$2.5K</div>
+                                <div class="muted">Revenue</div>
+                            </div><svg viewBox="0 0 100 40">
+                                <path d="M1 10C35 2 58 37 99 24" fill="none" stroke="#36bdc1" stroke-width="2" />
+                            </svg>
+                        </div>
+                    </button></div>
+                <div class="tile calendar" data-x=".79" data-y=".87" data-r="7" data-w="245" data-h="78"><button
+                        aria-label="Calendar">
+                        <div class="face">
+                            <div class="date"><b>MON</b><span>5</span></div>
+                            <div>
+                                <div class="title">Design review</div>
+                                <div class="muted">10:30</div>
+                            </div><span>▣</span>
+                        </div>
+                    </button></div>
+                <div class="toast" role="status" aria-live="polite"></div>
+                <div class="hint">Scroll to assemble<span>↓</span></div>
+            </div>
+        </section>
+        <section class="footer">
+            <h2>Everything in its place.</h2>
+            <p>Hover over the dock. Click a widget. Scroll back to reverse.</p><button id="again">Replay animation
+                ↑</button>
+        </section>
+    </main>
+    <script>
+        (() => {
+            const journey = document.querySelector('.journey'), stage = document.querySelector('.stage'), hero = document.querySelector('.hero'), desktop = document.querySelector('.desktop'), tray = document.querySelector('.dock-tray'), hint = document.querySelector('.hint'), toast = document.querySelector('.toast');
+            const items = [...document.querySelectorAll('.tile')].map((el, i) => ({ el, i, x: +el.dataset.x, y: +el.dataset.y, r: +el.dataset.r, w: +el.dataset.w, h: +el.dataset.h }));
+            const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+            let width = 0, height = 0, scale = 1, total = 0, start = 0, progress = 0, current = 0, last = 0, frame = 0, toastTimer;
+            const clamp = v => Math.min(1, Math.max(0, v)), ease = v => v * v * (3 - 2 * v), lerp = (a, b, t) => a + (b - a) * t;
+            function measure() { width = stage.clientWidth; height = stage.clientHeight; total = items.reduce((s, it) => s + it.w, 0) + items.length * 12; scale = Math.min(.66, (width * .87) / total); start = (width - total * scale) / 2; items.forEach(it => { it.el.style.width = it.w + 'px'; it.el.style.height = it.h + 'px' }); updateProgress() }
+            function updateProgress() { progress = clamp(-journey.getBoundingClientRect().top / (journey.offsetHeight - height)) }
+            function draw(time) {
+                const dt = Math.min(50, time - last || 16); last = time; current = reduced ? progress : lerp(current, progress, 1 - Math.exp(-dt / 65)); const p = current; const reveal = ease(clamp((p - .08) / .45)); desktop.style.opacity = reveal; desktop.style.transform = 'scale(' + lerp(.94, 1, reveal) + ')'; hero.style.opacity = 1 - ease(clamp(p / .32)); hero.style.transform = 'translate(-50%,-50%) translateY(' + (-60 * p) + 'px)'; hero.style.pointerEvents = p > .32 ? 'none' : 'auto'; hint.style.opacity = 1 - clamp(p * 5); tray.style.opacity = ease(clamp((p - .5) / .28)); const dockY = height * .80; tray.style.left = (start - 16) + 'px'; tray.style.top = (dockY - 38) + 'px'; tray.style.width = (total * scale + 32) + 'px'; tray.style.height = '80px'; let offset = 0;
+                items.forEach(it => { const q = ease(clamp((p - .1 - it.i * .012) / .69)); const spread = width < 600 ? .68 : 1; const sx = width / 2 + (it.x - .5) * width * spread; const sy = height * it.y; const ex = start + (offset + it.w / 2) * scale; const ey = dockY; const floating = reduced ? 0 : Math.sin(time / 1500 + it.i * 1.1) * 5 * (1 - q); const size = lerp(width < 600 ? .68 : 1, scale, q); const x = lerp(sx, ex, q), y = lerp(sy, ey, q) + floating; const angle = lerp(it.r, 0, q); it.el.style.transform = 'translate(' + (x - it.w / 2) + 'px,' + (y - it.h / 2) + 'px) rotate(' + angle + 'deg) scale(' + size + ')'; offset += it.w + 12 }); frame = requestAnimationFrame(draw)
+            }
+            function replay() { window.scrollTo({ top: 0, behavior: reduced ? 'instant' : 'smooth' }) }
+            document.querySelector('#replay').addEventListener('click', replay); document.querySelector('#again').addEventListener('click', replay); document.querySelector('#explore').addEventListener('click', () => window.scrollTo({ top: journey.offsetHeight - height, behavior: reduced ? 'instant' : 'smooth' }));
+            items.forEach(it => it.el.querySelector('button').addEventListener('click', () => { toast.textContent = it.el.querySelector('button').getAttribute('aria-label'); toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('visible'), 1500) }));
+            addEventListener('scroll', updateProgress, { passive: true }); new ResizeObserver(measure).observe(stage); document.addEventListener('visibilitychange', () => { cancelAnimationFrame(frame); if (!document.hidden) { last = 0; frame = requestAnimationFrame(draw) } }); measure(); frame = requestAnimationFrame(draw);
+        })();
+    </script>
+</body>
+
+</html>
